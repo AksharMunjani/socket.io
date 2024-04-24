@@ -1,21 +1,43 @@
 const express = require("express");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
 
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
+app.use(cors());
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Socket.IO event handlers
+// Add a login route to authenticate users
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
+  if (username === "admin" && password === "password") {
+    const token = jwt.sign({ username }, "secret_key");
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: "Invalid credentials" });
+  }
+});
+
+// Socket.IO event handlers
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (token) {
-    next();
+    jwt.verify(token, "secret_key", (err, decoded) => {
+      if (err) {
+        next(new Error("Authentication error"));
+      } else {
+        next();
+      }
+    });
   } else {
     next(new Error("Authentication error"));
   }

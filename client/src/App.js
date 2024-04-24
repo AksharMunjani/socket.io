@@ -16,6 +16,7 @@ const App = () => {
     socket.on("chat message", (msg) => {
       setMessages((prevMessages) => [...prevMessages, msg]);
     });
+    login();
   }, [socket]);
 
   const sendMessage = (e) => {
@@ -46,6 +47,26 @@ const App = () => {
     socket.emit("leave room", currentRoom);
     setMessages([]);
     setCurrentRoom("");
+  };
+
+  // Add a login function in your React component
+  const login = async () => {
+    const response = await fetch("http://localhost:8080/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username: "admin", password: "password" }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("🚀 ~ login ~ data:", data);
+      const { token } = data;
+      localStorage.setItem("token", token);
+    } else {
+      console.error("Login failed");
+    }
   };
 
   return (
